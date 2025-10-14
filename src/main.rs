@@ -3,7 +3,7 @@ use std::{collections::VecDeque, time::Duration};
 use async_std::task;
 use mpris::{Player, PlayerFinder};
 use tokio::{self, time::{sleep_until, Instant}};
-use crate::lrc;
+mod lrc;
 
 
 struct Lyric {
