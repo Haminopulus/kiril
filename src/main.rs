@@ -38,8 +38,9 @@ async fn get_active_player(retry_duration: Duration) -> Player {
 #[tokio::main]
 async fn main() {
     let lyrics: VecDeque<Lyric>;
-    let retry_dur = Duration::from_secs(5);
+    let retry_dur = Duration::from_secs(2);
     let player: Player = get_active_player(retry_dur).await;
+    println!("active: {}", player.identity());
     loop {
         // check for Playerevents
         todo!();
