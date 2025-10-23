@@ -41,6 +41,7 @@ async fn main() {
     let retry_dur = Duration::from_secs(2);
     let player: Player = get_active_player(retry_dur).await;
     println!("active: {}", player.identity());
+    lrc::get_current_lyrics(player.get_metadata().unwrap());
     loop {
         // check for Playerevents
         todo!();
@@ -52,16 +53,3 @@ async fn main() {
         };
     }
 }
-
-
-
-//let player = PlayerFinder::new()?
-//        .find_active()
-//        .expect("No active players found!");
-//    let metadata = player.get_metadata().unwrap();
-//    println!("Artist: {}, Track Name: {}, URL: {}", 
-//        metadata.artists().unwrap()[0],
-//        metadata.title().unwrap(),
-//        decode(metadata.url().unwrap()).expect("FromUTF8Error"))
-
-
