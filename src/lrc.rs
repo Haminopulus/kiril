@@ -1,6 +1,8 @@
-use std::{fs::read_dir, path::{Path, PathBuf}};
+use std::{collections::VecDeque, fs::{self, read_dir}, path::{Path, PathBuf}};
 use mpris::Metadata;
 use urlencoding::decode;
+
+use crate::Lyric;
 
 /// based on currently playing file, find corresponding .lrc-file if it exists near the song file
 fn get_lyric_file(metadata: Metadata) -> Option<PathBuf> {
@@ -52,9 +54,42 @@ fn search_dir(file_name: &str, dir: &Path, depth: u16) -> Option<String> {
     return None
 }
 
-pub fn get_current_lyrics(metadata: Metadata) {
+// this should probably be a separate file
+fn parse_lyric_file(file: PathBuf) -> Option<VecDeque<Lyric>> {
+    let lyrics: VecDeque<Lyric>;
+    let contents = fs::read_to_string(file)
+        .expect("Should have been able to read the file");
+
+
+       // regex_search_enhanced_text
+       // R"(<([^>]+)>(.*?)(?=<|$))"
+
+       // regex_match_text
+       // R"(\[(\d{1,2}):(\d{1,2})\.(\d{2,3})(?:\.(\d{2,3}))?\](.*))"
+
+       // regex_match_time
+       // R"((\d{1,2}):(\d{1,2})\.(\d{2,3}))"
+
+    println!("With text:\n{contents}");
+    return None
+}
+
+pub fn get_current_lyrics(metadata: Metadata) -> VecDeque<Lyric> {
+    let lyric_file : PathBuf;
     match get_lyric_file(metadata) {
-        Some(pathbuf) => println!("{}", pathbuf.to_str().unwrap()),
+        Some(pathbuf) => {
+            println!("{}", pathbuf.to_str().unwrap());
+            lyric_file = pathbuf;
+        },
         _ => unimplemented!()
     };
+    let lyrics: VecDeque<Lyric>;
+    match parse_lyric_file(lyric_file) {
+        Some(lrcs) => {
+            println!("Got Lyrics of length {}", lrcs.len());
+            lyrics = lrcs;
+        }
+        _ => unimplemented!()
+    };
+    return lyrics
 }
