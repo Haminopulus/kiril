@@ -1,8 +1,26 @@
 use std::{collections::VecDeque, fs::{self, read_dir}, path::{Path, PathBuf}};
 use mpris::Metadata;
+use regex::Regex;
 use urlencoding::decode;
+use std::sync::LazyLock;
 
 use crate::Lyric;
+
+
+fn re_get_enhanced_text(haystack: &str) -> bool {
+    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(<([^>]+)>(.*?)(?=<|$))").unwrap());
+    RE.is_match(haystack)
+}
+
+fn re_get_text(haystack: &str) -> bool {
+    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(\[(\d{1,2}):(\d{1,2})\.(\d{2,3})(?:\.(\d{2,3}))?\](.*))").unwrap());
+    RE.is_match(haystack)
+}
+ 
+fn re_get_time(haystack: &str) -> bool {
+    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"((\d{1,2}):(\d{1,2})\.(\d{2,3}))").unwrap());
+    RE.is_match(haystack)
+}
 
 /// based on currently playing file, find corresponding .lrc-file if it exists near the song file
 fn get_lyric_file(metadata: Metadata) -> Option<PathBuf> {
@@ -28,8 +46,8 @@ fn get_lyric_file(metadata: Metadata) -> Option<PathBuf> {
     return None
 }
 
-/// search the directory for given file_name with given recursive depth
 fn search_dir(file_name: &str, dir: &Path, depth: u16) -> Option<String> {
+/// search the directory for given file_name with given recursive depth
     if dir.is_dir() {
         for entry in read_dir(dir).unwrap() {
             let path = entry.unwrap().path();
@@ -60,15 +78,6 @@ fn parse_lyric_file(file: PathBuf) -> Option<VecDeque<Lyric>> {
     let contents = fs::read_to_string(file)
         .expect("Should have been able to read the file");
 
-
-       // regex_search_enhanced_text
-       // R"(<([^>]+)>(.*?)(?=<|$))"
-
-       // regex_match_text
-       // R"(\[(\d{1,2}):(\d{1,2})\.(\d{2,3})(?:\.(\d{2,3}))?\](.*))"
-
-       // regex_match_time
-       // R"((\d{1,2}):(\d{1,2})\.(\d{2,3}))"
 
     println!("With text:\n{contents}");
     return None
