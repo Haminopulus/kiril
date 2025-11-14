@@ -5,11 +5,13 @@ use mpris::{Player, PlayerFinder};
 use tokio::{self, time::{sleep_until, Instant}};
 mod lrc;
 
-
+// TODO: probably need to think about this struct a bit more, especially when we have elrc lyrics
+// it should contain a hashmap that maps words to the (sub-)timestamps
 struct Lyric {
     text: String,
     time: Duration,
 }
+
 impl Lyric {
     fn new(txt: &str, dur: Duration) -> Lyric {
         Lyric { text: String::from(txt), time: dur }
@@ -41,7 +43,7 @@ async fn main() {
     let retry_dur = Duration::from_secs(2);
     let player: Player = get_active_player(retry_dur).await;
     println!("active: {}", player.identity());
-    lrc::get_current_lyrics(player.get_metadata().unwrap());
+    lrc::find::get_current_lyrics(player.get_metadata().unwrap());
     loop {
         // check for Playerevents
         todo!();

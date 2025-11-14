@@ -1,33 +1,36 @@
-use std::{sync::LazyLock, path::PathBuf};
-use std::Regex::regex;
+use std::{collections::VecDeque, path::PathBuf, sync::LazyLock, fs};
+use regex::Regex;
 use crate::Lyric;
 
 // TODO: these functions can and should probably be combined somehow
-fn re_get_enhanced_text(haystack: &str) -> bool {
-    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(<([^>]+)>(.*?)(?=<|$))").unwrap());
-    RE.is_match(haystack)
+static RE_ELRC_TXT: LazyLock<Regex> = LazyLock::new(
+    || Regex::new(r"(<([^>]+)>(.*?)(?=<|$))").unwrap());
+static RE_LRC_TXT: LazyLock<Regex> = LazyLock::new(
+    || Regex::new(r"(\[(\d{1,2}):(\d{1,2})\.(\d{2,3})(?:\.(\d{2,3}))?\](.*))").unwrap());
+static RE_LRC_TIME: LazyLock<Regex> = LazyLock::new(
+    || Regex::new(r"((\d{1,2}):(\d{1,2})\.(\d{2,3}))").unwrap());
+
+// perhaps useless function, either do the whole for loop in the parse_lyric_file or use this for
+// parsing a single line
+fn re_get_text(haystack: &str) -> Lyric {
+    let is_elrc: bool = RE_ELRC_TXT.is_match(haystack);
+    if is_elrc {}
+    todo!();
 }
 
-fn re_get_text(haystack: &str) -> bool {
-    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(\[(\d{1,2}):(\d{1,2})\.(\d{2,3})(?:\.(\d{2,3}))?\](.*))").unwrap());
-    RE.is_match(haystack)
-}
- 
-fn re_get_time(haystack: &str) -> bool {
-    static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"((\d{1,2}):(\d{1,2})\.(\d{2,3}))").unwrap());
-    RE.is_match(haystack)
-}
+
 
 pub fn parse_lyric_file(file: PathBuf) -> Option<VecDeque<Lyric>> {
     let lyrics: VecDeque<Lyric>;
-    let contents = fs::read_to_string(file)
+    let lines = fs::read_to_string(file)
         .expect("Should have been able to read the file");
+        
+    for line in lines.split("\n") {
+        todo!();
+        // for each line: find matches and read (time:text) from capture groups
+        // handle enhanced lyrics and unicode DOM
+        // append the Lyric to the Dequeue
+    }
 
-    // first: check if elrc, else normal lrc (how would you check for elrc? just check if the word
-    // time stamps exist?)
-    // for each line: find matches and read (time:text) from capture groups
-    // append the Lyric to the Dequeue
-
-    println!("With text:\n{contents}");
     return None
 }
