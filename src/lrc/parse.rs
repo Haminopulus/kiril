@@ -2,7 +2,6 @@ use std::{collections::VecDeque, path::PathBuf, sync::LazyLock, fs};
 use regex::Regex;
 use crate::Lyric;
 
-// TODO: these functions can and should probably be combined somehow
 static RE_ELRC_TXT: LazyLock<Regex> = LazyLock::new(
     || Regex::new(r"(<([^>]+)>(.*?)(?=<|$))").unwrap());
 static RE_LRC_TXT: LazyLock<Regex> = LazyLock::new(
@@ -13,23 +12,22 @@ static RE_LRC_TIME: LazyLock<Regex> = LazyLock::new(
 // perhaps useless function, either do the whole for loop in the parse_lyric_file or use this for
 // parsing a single line
 fn re_get_text(haystack: &str) -> Lyric {
-    let is_elrc: bool = RE_ELRC_TXT.is_match(haystack);
-    if is_elrc {}
-    todo!();
 }
 
 
 
-pub fn parse_lyric_file(file: PathBuf) -> Option<VecDeque<Lyric>> {
+pub fn parse_lrc_file(file: PathBuf) -> Option<VecDeque<Lyric>> {
     let lyrics: VecDeque<Lyric>;
     let lines = fs::read_to_string(file)
         .expect("Should have been able to read the file");
         
+    let is_elrc: bool = RE_ELRC_TXT.is_match(&lines);
     for line in lines.split("\n") {
-        todo!();
         // for each line: find matches and read (time:text) from capture groups
-        // handle enhanced lyrics and unicode DOM
         // append the Lyric to the Dequeue
+        // for normal lrc: Lyric = VecDequeue with single tuple (whole line, timestamp), elrc
+        // VecDequeue contains tuples like (word, sub-timestamp)
+        lyrics.push_back(todo!());
     }
 
     return None
