@@ -4,7 +4,12 @@ use urlencoding::decode;
 
 /// based on current metadata, find corresponding lrc-file if it exists near the song file
 pub fn get_lrc_file(metadata: &Metadata) -> Option<PathBuf> {
-    let url: String = metadata.url()?.into();
+
+    let url: String = match metadata.url() {
+        Some(path) => String::from(path),
+        None => {return None;}
+    };
+
 
     if url.starts_with("file://") { // only handling local files
         let url: String = match decode(&url) {
@@ -14,7 +19,6 @@ pub fn get_lrc_file(metadata: &Metadata) -> Option<PathBuf> {
         let path = Path::new(url.trim_start_matches("file://"));
         let file_name: &str = &format!("{}.lrc", path.file_stem()?.to_str()?);
         assert!(path.is_absolute());
-
         match search_dir(file_name, path.parent()?, 1) {
             Some(path) => return Some(PathBuf::from(&path)),
             None => return None

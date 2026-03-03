@@ -1,11 +1,11 @@
-use std::{collections::VecDeque, time::Duration};
+use std::{collections::VecDeque, io::{stdout, Write}, time::Duration};
 
 use async_std::task;
-use mpris::{PlaybackStatus, Player, PlayerFinder, ProgressTick, ProgressTracker};
-use tokio::{self, time::{sleep_until, Instant}};
+use mpris::{Metadata, PlaybackStatus, Player, PlayerFinder, TrackID};
+use tokio::{self};
 mod lrc;
 
-type TimeTag = (String, Duration);
+type TimeTag = (Duration, String);
 type Lyric = VecDeque<TimeTag>;
 
 /// Wait for active player to be found and return it
@@ -25,53 +25,94 @@ async fn get_active_player(retry_dur: Duration) -> Player {
 
 
 #[tokio::main]
-async  fn main() {
-    let mut lyrics: VecDeque<Lyric> = VecDeque::new();
+async fn main() {
     let retry_dur = Duration::from_secs(2);
+    let mut playback_status: PlaybackStatus;
 
     loop {
         let player: Player = get_active_player(retry_dur).await;
-        println!("DEBUG: active player {} discovered", player.identity());
-        let mut tracker: ProgressTracker = player.track_progress(10).unwrap();
-        let ProgressTick {progress, ..} = tracker.tick();
-        let mut song = progress.metadata().track_id();
+        let mut lyrics: VecDeque<Lyric> = VecDeque::new();
+        let mut current_line: Lyric = VecDeque::new();
+        let mut previous_pos = Duration::default();
+        let mut current_pos: Duration;
+        let mut previous_song: Option<TrackID> = None;
+        let mut current_song: Option<TrackID>;
+        let mut previous_word: TimeTag = (Duration::default(), String::default());
+        let mut current_word: TimeTag = (Duration::default(), String::default());
 
         loop {
-            let ProgressTick {progress, progress_changed, player_quit, ..} = tracker.tick();
-
-            if player_quit {break}
-
-            // happens on song change
-            if progress_changed {
-                let current_song = progress.metadata().track_id();
-                if song != current_song {
-                    song = current_song;
-                    lyrics = match lrc::get_lyrics(progress.metadata()) {
-                        Some(lrcs) => lrcs,
-                        None => VecDeque::new()
-                    }
-                }
+            if !player.is_running() {
+                break;
             }
 
-            match progress.playback_status() {
+            let metadata: Metadata = match player.get_metadata() {
+                Ok(met) => met,
+                Err(_) => break
+            };
+
+            current_song = metadata.track_id();
+            current_pos = match player.get_position() {
+                Ok(pos) => pos,
+                Err(_) => break
+                };
+
+            if (previous_song != current_song) || (previous_pos > current_pos) {
+                current_line = VecDeque::new();
+                current_word = (Duration::default(), String::default());
+                previous_word = (Duration::default(), String::default());
+                previous_song = current_song;
+                lyrics = match lrc::get_lyrics(&metadata) {
+                    Some(lrcs) => lrcs,
+                    None => {println!("No Lyrics!"); VecDeque::new()}
+                };
+            }
+
+            previous_pos = current_pos;
+
+            playback_status = match player.get_playback_status() {
+                Ok(status) => status,
+                Err(_) => break
+            };
+            match playback_status {
                 PlaybackStatus::Stopped | PlaybackStatus::Paused => {
-                        task::sleep(retry_dur).await;
+                    task::sleep(retry_dur).await;
+                    continue;
                 }
                 PlaybackStatus::Playing => {
-                        // get the next line
-                        if !lyrics.is_empty() {
-                            let position: Duration = progress.position();
-                            let next_line: Lyric = lyrics.pop_front().unwrap();
-                            let mut next_time: Instant = Instant::now();
-                                for word in next_line {
-                                    next_time = next_time + (word.1 - position);
-                                    sleep_until(next_time).await;
-                                    print!("{}", word.0)
-                                }
-                                print!("\n")
-                        } else {
-                            task::sleep(retry_dur).await;
+                    let word: TimeTag;
+                    if !lyrics.is_empty() {
+                        if current_line.is_empty() {
+                            print!("\n");
+                            stdout().flush().expect("IOError");
+                            current_line = lyrics.pop_front().unwrap();
                         }
+                        if previous_word == current_word {
+                            word = current_line.pop_front().unwrap();
+                            current_word = word.clone();
+                        } else {
+                            word = current_word.clone();
+                        }
+
+                        if word.0 < current_pos {
+                            print!("{}", word.1.trim());
+                            if !word.1.trim().is_empty() {print!(" ")}
+                            previous_word = word.clone();
+                            stdout().flush().expect("IOError");
+                            continue;
+                        }
+                        let next_time = word.0 - current_pos;
+                        if next_time > retry_dur {
+                            task::sleep(retry_dur).await;
+                        } else {
+                            task::sleep(next_time).await;
+                            print!("{}", word.1.trim());
+                            if !word.1.trim().is_empty() {print!(" ")}
+                            previous_word = word.clone();
+                            stdout().flush().expect("IOError");
+                        }
+                    } else {
+                        task::sleep(retry_dur).await;
+                    }
                 }
             }
         }
