@@ -1,20 +1,10 @@
 IDEA:
 ------------
-- running constantly in the background, awaiting PlaybackState = 'Playing'
-- ONCE PLAYBACK IS DETECTED:
-    - poll track position once
-    - then start incrementing timer
-      (idea) poll every x seconds and correct timer accordingly (only if it is needed)
-    - timer needs to take into account: Playback speed, Skipping around, pausing and track switch
-    - updating the timer state should happen on recieved signals (not every x seconds if possible)
-
-    - poll metadata once and extract file URI
-    - find according (e)lrc file
-    - parse
-    - sync with timer
-
 - OPTIONAL:
     - some widget implementation
     - "now playing" screen with album art and playback control
+
+ISSUES:
+Knocked Loose/Mistakes Like Fractures last timestamp not working (why??)
 
 
