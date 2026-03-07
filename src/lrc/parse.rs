@@ -36,18 +36,19 @@ pub fn parse_lrc_file(file: PathBuf) -> Option<VecDeque<Lyric>> {
 
     let is_elrc: bool = RE_ELRC_TXT.is_match(&lines);
     for line in lines.split("\n") {
+
         if !RE_LRC_TIME.is_match(line) {continue;}
-        let mut lyric_line: Lyric = VecDeque::new();
+        let mut line_lyric: Lyric = VecDeque::new();
         let line_start = RE_LRC_TIME.captures(line).unwrap()
             .get(1).unwrap()
             .as_str();
 
         if is_elrc {
-            lyric_line.push_back((parse_timestamp(&line_start),String::new()));
+            line_lyric.push_back((parse_timestamp(&line_start),String::new()));
             for timetag in RE_ELRC_TXT.captures_iter(line) {
                 let (_, [time, word]) = timetag.extract();
                 let word = if word.is_empty() {" "} else {word};
-                lyric_line.push_back(
+                line_lyric.push_back(
                     (parse_timestamp(time), word.to_owned())
                 );
             }
@@ -56,9 +57,9 @@ pub fn parse_lrc_file(file: PathBuf) -> Option<VecDeque<Lyric>> {
                 .unwrap()
                 .extract::<1>().1[0]; // access the 2md element of the tuple and the 1st element
                                       // of the capture group array
-            lyric_line.push_back((parse_timestamp(line_start), line_txt.into()));
+            line_lyric.push_back((parse_timestamp(line_start), line_txt.into()));
         }
-        lyrics.push_back(lyric_line);
+        lyrics.push_back(line_lyric);
     }
 
     return Some(lyrics)
