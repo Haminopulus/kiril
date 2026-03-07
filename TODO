@@ -1,10 +1,14 @@
 IDEA:
 ------------
 - OPTIONAL:
-    - some widget implementation
-    - "now playing" screen with album art and playback control
+=> make it look better !!! (das erfüllt die SMART Prinzipien ong)
+=> Readme
+=> exec flags for step, json etc
+    => help command i guess
+=> Test on NixOS, and whatever OS i have lying around
 
 ISSUES:
 Knocked Loose/Mistakes Like Fractures last timestamp not working (why??)
+=> The last line never fully gets played for some reason aaaahhh
 
 
