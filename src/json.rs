@@ -1,5 +1,4 @@
 use serde::Serialize;
-use std::cmp::{min, max};
 use std::collections::VecDeque;
 use crate::Lyric;
 
@@ -63,7 +62,7 @@ pub fn json_convert(lyrics: &VecDeque<Lyric>, line_num: u32, word_num: u32, step
         } else if i == line_num {
             // elrc has multiple time stamps
             if line.len() > 1 {
-                for j in 0..max(word_num as i32, 0) as usize {
+                for j in 0..word_num as usize {
                     let word = &line.get(j).unwrap().1;
                     if !word.trim().is_empty() {
                         json_prev_words += word;
@@ -75,8 +74,11 @@ pub fn json_convert(lyrics: &VecDeque<Lyric>, line_num: u32, word_num: u32, step
                 let mut overhang = 0;
                 json_curr_word += match line.get(word_num as usize) {
                     Some(word) => if !word.1.trim().is_empty() {&word.1} else {
-                        let next = &line.get((word_num + 1) as usize).unwrap().1;
-                        if !next.trim().is_empty() {overhang = 1; next} else {""}
+                        let next = match &line.get((word_num + 1) as usize) {
+                            Some(tag) => &tag.1,
+                            None => ""
+                        };
+                        if !next.trim().is_empty() {overhang = 1; &next} else {""}
                     },
                     None => ""
                 };
