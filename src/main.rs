@@ -50,7 +50,7 @@ async fn main() {
         let mut current_word: TimeTag = (Duration::default(), String::default());
         let mut word_num: u32 = 0;
         let mut newline: bool = true;
-        let mut cover: String = "".into();
+        let mut cover: String;
 
         loop {
             // go back to player search if player quit
@@ -129,7 +129,11 @@ async fn main() {
                                             line_num += 1;
                                             word_num = 0;
                                         }
-                                        println!("{}", json_convert(&lyrics_clone, line_num as u32, word_num, step, &cover))
+                                        println!("{}", json_convert(
+                                            &lyrics_clone,
+                                            line_num as u32,
+                                            word_num, step,
+                                            &String::default()));
                                     } else {
                                         print!("{}", current_word.1.trim()); 
                                         print!("{}", if current_word.1.trim().is_empty() {" "} else {""});
@@ -160,7 +164,12 @@ async fn main() {
                                             line_num += 1;
                                             word_num = 0;
                                         }
-                                        println!("{}", json_convert(&lyrics_clone, line_num as u32, word_num, step, &cover))
+                                        println!("{}", json_convert(
+                                            &lyrics_clone,
+                                            line_num as u32,
+                                            word_num,
+                                            step,
+                                            &String::default()))
                                     } else {
                                         print!("{}", current_word.1.trim());
                                         print!("{}", if current_word.1.trim().is_empty() {" "} else {""});
