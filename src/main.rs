@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, io::{stdout, Write}, time::Duration};
+use std::{env, collections::VecDeque, io::{stdout, Write}, time::Duration};
 use async_std::task;
 use mpris::{Metadata, PlaybackStatus, Player, TrackID};
 use tokio::{self};
@@ -13,9 +13,48 @@ type Lyric = VecDeque<TimeTag>;
 
 #[tokio::main]
 async fn main() {
-    let retry_dur = Duration::from_secs(2);
-    let json: bool = true;
-    let step: u32 = 2;
+    let mut retry_dur = Duration::from_secs(2);
+    let mut json: bool = false;
+    let mut step: u32 = 2;
+
+    let mut cargs = env::args();
+
+    _ = cargs.next(); // program name
+    while let Some(arg) = cargs.next() {
+         match arg.as_str() {
+            "--help" | "-h" => {
+                println!("
+Usage: kiril [ARGS]
+Arguments:
+ -h, --help                             Print this help message
+ -j, --json                             Enable JSON output mode
+ -r [SECS], --retry-duration [SECS]     Set the maximum sleep-duration between player state and metadata queries.
+                                        high SECS leads to longer response time to changes but less CPU usage (default: 2)
+ -s [u32], --step [u32]                 Set how many lines before and after the current line are sent inside the JSON 
+                                        message (only important if -j arg is present)
+                "); return}
+            "--json" | "-j" => {json = true;}
+            "--retry-duration" | "-r" => {
+                match cargs.next() {
+                    Some(next) => match next.parse::<u64>() {
+                        Ok(secs) => retry_dur = Duration::from_secs(secs),
+                        Err(_) => {println!("Expected retry duration in seconds, Exiting."); return;}
+                    },
+                    None => {println!("Expected retry duration, Exiting."); return;}
+                }
+            }
+            "--step" | "-s" => {
+                match cargs.next() {
+                    Some(next) => match next.parse::<u32>() {
+                        Ok(stp) => step = stp,
+                        Err(_) => {println!("Expected step value as u32, Exiting."); return;}
+                    },
+                    None => {println!("Expected step value, Exiting."); return;}
+                }
+            }
+            _ => {println!("Invalid Argument, see `kiril --help` for permitted args"); return;}
+        }
+    }
 
     // player search and variable initialization loop
     loop {
@@ -86,7 +125,7 @@ async fn main() {
                                         newline = true;
                                     } else {
                                         print!("\n");
-                                        let _ = stdout().flush();
+                                        _ = stdout().flush();
                                     }
                                 }
 
@@ -112,9 +151,10 @@ async fn main() {
                                             word_num, step,
                                             String::default()));
                                     } else {
-                                        print!("{}", curr_word.1.trim()); 
-                                        print!("{}", if curr_word.1.trim().is_empty() {" "} else {""});
-                                        let _ = stdout().flush();
+                                        if !curr_word.1.trim().is_empty() {
+                                            print!("{} ", curr_word.1.trim()); 
+                                            let _ = stdout().flush();
+                                        }
                                     }
                                     continue;
                                 }
@@ -147,9 +187,10 @@ async fn main() {
                                             step,
                                             String::default()))
                                     } else {
-                                        print!("{}", curr_word.1.trim());
-                                        print!("{}", if curr_word.1.trim().is_empty() {" "} else {""});
-                                        stdout().flush().expect("IOError");
+                                        if !curr_word.1.trim().is_empty() {
+                                            print!("{} ", curr_word.1.trim());
+                                            stdout().flush().expect("IOError");
+                                        }
                                     }
                                 }
                             // if lyrics is empty (instrumental or missing .lrc file...)
