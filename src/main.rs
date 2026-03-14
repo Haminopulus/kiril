@@ -1,30 +1,15 @@
 use std::{collections::VecDeque, io::{stdout, Write}, time::Duration};
-
 use async_std::task;
-use mpris::{Metadata, PlaybackStatus, Player, PlayerFinder, TrackID};
+use mpris::{Metadata, PlaybackStatus, Player, TrackID};
 use tokio::{self};
 
 use crate::json::json_convert;
 mod lrc;
 mod json;
+mod playerfind;
 
 type TimeTag = (Duration, String);
 type Lyric = VecDeque<TimeTag>;
-
-/// Wait for active player to be found and return it
-async fn get_active_player(retry_dur: Duration) -> Player {
-    let finder: PlayerFinder = PlayerFinder::new().expect("DBusError");
-    loop {
-        let player = match finder.find_active() {
-            Ok(pl) => pl,
-            Err(_) => {
-                task::sleep(retry_dur).await;
-                continue;
-            },
-        };
-        return player;
-    }
-}
 
 #[tokio::main]
 async fn main() {
@@ -32,65 +17,58 @@ async fn main() {
     let json: bool = true;
     let step: u32 = 2;
 
+    // player search and variable initialization loop
     loop {
-        let player: Player = get_active_player(retry_dur).await;
+        let player: Player = playerfind::get_active_player(retry_dur).await;
         let mut lyrics: VecDeque<Lyric> = VecDeque::new();
         let mut lyrics_clone: VecDeque<Lyric> = VecDeque::new();
 
-        let mut current_line: Lyric = VecDeque::new();
+        let mut curr_line: Lyric = VecDeque::new();
         let mut line_num: i32 = -1;
 
-        let mut previous_pos = Duration::default();
-        let mut current_pos: Duration;
+        let mut prev_pos: Duration = Duration::default();
+        let mut curr_pos: Duration;
 
-        let mut previous_song: Option<TrackID> = None;
-        let mut current_song: Option<TrackID>;
+        let mut prev_song: Option<TrackID> = None;
+        let mut curr_song: Option<TrackID>;
 
-        let mut previous_word: TimeTag = (Duration::default(), String::default());
-        let mut current_word: TimeTag = (Duration::default(), String::default());
-        let mut word_num: u32 = 0;
-        let mut newline: bool = true;
-        let mut cover: String;
+        let mut prev_word: TimeTag = (Duration::default(), String::default());
+        let mut curr_word: TimeTag = (Duration::default(), String::default());
+        let mut word_num: u32 = 0;          // index of current word in line (only relevant for ELRC)
+        let mut newline: bool = true;       // is the current line done playing
 
+        // once player found, lyrics parse/play loop
         loop {
-            // go back to player search if player quit
+            // go back to player search if player quit or if DBusErrors occurr while getting metadata
             if !player.is_running() {
                 break;
             }
+            curr_pos = match player.get_position() { Ok(p) => p, Err(_) => break };
 
-            let metadata: Metadata = match player.get_metadata() {
-                Ok(met) => met,
-                Err(_) => break
-            };
-
-            current_song = metadata.track_id();
-            current_pos = match player.get_position() {
-                Ok(pos) => pos,
-                Err(_) => break
-                };
+            let metadata: Metadata = match player.get_metadata() { Ok(m) => m, Err(_) => break };
+            curr_song = metadata.track_id();
 
             // if we searched backwards or changed song, get new lyrics
-            if (previous_song != current_song) || (previous_pos > current_pos) {
-                cover = urlencoding::decode(metadata.art_url()
+            if (prev_song != curr_song) || (prev_pos > curr_pos) {
+                // cover sent once here, afterwards only lyrics will be sent
+                let cover = urlencoding::decode(metadata.art_url()
                     .unwrap_or_default().strip_prefix("file://").unwrap_or_default())
                     .unwrap_or_default().into_owned();
                 line_num = -1;
                 word_num = 0;
-                current_line = VecDeque::new();
-                current_word = (Duration::default(), String::default());
-                previous_word = (Duration::default(), String::default());
-                previous_song = current_song;
-                lyrics = match lrc::get_lyrics(&metadata) {
-                    Some(lrcs) => lrcs,
-                    None => {VecDeque::new()}
-                };
-                lyrics_clone = lyrics.clone();
+                curr_line = VecDeque::new();
+                curr_word = (Duration::default(), String::default());
+                prev_word = (Duration::default(), String::default());
+                prev_song = curr_song;
+                lyrics = match lrc::get_lyrics(&metadata) { Some(x) => x, None => {VecDeque::new()} };
+
                 if json {
-                    println!("{}", json_convert(&lyrics_clone, 0, word_num, step, &cover))
+                    lyrics_clone = lyrics.clone(); // full lyrics, not modified when played
+                    println!("{}", json_convert(&lyrics_clone, 0, word_num, step, cover))
                 }
             }
-            previous_pos = current_pos;
 
+            prev_pos = curr_pos;
 
             match player.get_playback_status() {
                 Ok(status) => {
@@ -101,26 +79,25 @@ async fn main() {
                         }
                         PlaybackStatus::Playing => {
                             if !lyrics.is_empty() {
-                                // Line has been fully printed, switch to next line
-                                if current_line.is_empty() && previous_word == current_word {
-                                    current_line = lyrics.pop_front().unwrap();
+                                // line has been fully printed, switch to next line
+                                if curr_line.is_empty() && prev_word == curr_word {
+                                    curr_line = match lyrics.pop_front() { Some(x) => x, None => break };
                                     if json {
                                         newline = true;
                                     } else {
                                         print!("\n");
-                                        stdout().flush().expect("IOError");
+                                        let _ = stdout().flush();
                                     }
-
                                 }
 
                                 // previous word was printed, set next word as current
-                                if previous_word == current_word {
-                                    current_word = current_line.pop_front().unwrap();
+                                if prev_word == curr_word {
+                                    curr_word = match curr_line.pop_front() { Some(x) => x, None => break };
                                 }
 
                                 // if word timetag is already reached, print word
-                                if current_word.0 < current_pos {
-                                    previous_word = current_word.clone();
+                                if curr_word.0 < curr_pos {
+                                    prev_word = curr_word.clone();
                                     word_num += 1;
 
                                     if json {
@@ -133,19 +110,18 @@ async fn main() {
                                             &lyrics_clone,
                                             line_num as u32,
                                             word_num, step,
-                                            &String::default()));
+                                            String::default()));
                                     } else {
-                                        print!("{}", current_word.1.trim()); 
-                                        print!("{}", if current_word.1.trim().is_empty() {" "} else {""});
-                                        stdout().flush().expect("IOError");
+                                        print!("{}", curr_word.1.trim()); 
+                                        print!("{}", if curr_word.1.trim().is_empty() {" "} else {""});
+                                        let _ = stdout().flush();
                                     }
-
                                     continue;
                                 }
 
                                 // if word is not yet reached, sleep until it is reached or
                                 // retry_duration is
-                                let next_time = current_word.0 - current_pos;
+                                let next_time = curr_word.0 - curr_pos;
                                 if next_time > retry_dur {
                                     task::sleep(retry_dur).await;
                                 } else {
@@ -155,7 +131,7 @@ async fn main() {
                                         && state.unwrap_or(PlaybackStatus::Stopped) == PlaybackStatus::Playing) {
                                         continue;
                                     }
-                                    previous_word = current_word.clone();
+                                    prev_word = curr_word.clone();
                                     word_num += 1;
 
                                     if json {
@@ -169,13 +145,14 @@ async fn main() {
                                             line_num as u32,
                                             word_num,
                                             step,
-                                            &String::default()))
+                                            String::default()))
                                     } else {
-                                        print!("{}", current_word.1.trim());
-                                        print!("{}", if current_word.1.trim().is_empty() {" "} else {""});
+                                        print!("{}", curr_word.1.trim());
+                                        print!("{}", if curr_word.1.trim().is_empty() {" "} else {""});
                                         stdout().flush().expect("IOError");
                                     }
                                 }
+                            // if lyrics is empty (instrumental or missing .lrc file...)
                             } else {
                                 task::sleep(retry_dur).await;
                             }

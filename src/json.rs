@@ -30,7 +30,7 @@ fn to_json(prev_lines: Vec<String>, next_lines: Vec<String>, prev_words: String,
 ///  * line_num: u32 = number of current line
 ///  * word_num: u32 = number of current word in the line
 ///  * step: u32 = how many lines before and after should be processed
-pub fn json_convert(lyrics: &VecDeque<Lyric>, line_num: u32, word_num: u32, step: u32, cover: &String) -> String {
+pub fn json_convert(lyrics: &VecDeque<Lyric>, line_num: u32, word_num: u32, step: u32, cover: String) -> String {
     let mut json_prev_lines: Vec<String> = Vec::default();
     let mut json_next_lines: Vec<String> = Vec::default();
     let mut json_curr_word: String = String::default();
