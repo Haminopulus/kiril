@@ -22,7 +22,7 @@ Once a matching file is found, kiril parses it to extract timestamps for all the
 
 
 ## Tested Players
-> [!WARNING]
+> [!NOTE]
 > I did not write or test this for streaming services such as Spotify or Apple Music (Which do also have their own lyric-viewer implementations). There are no plans to change that any time soon. This is intended for local file playback with locally stored `.lrc` files only!
 
 Support for MPRIS' features is not fully realized by all players, some issues I have encountered and might fix are:
