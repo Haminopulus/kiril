@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 async-std = "1.13.2"
+base64 = "0.22.1"
 dbus = "0.9.7"
 mpris = "2.0.1"
 regex = "1.12.1"

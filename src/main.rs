@@ -1,7 +1,9 @@
-use std::{env, collections::VecDeque, io::{stdout, Write}, time::Duration};
+use std::{collections::VecDeque, env, io::{stdout, Write}, path::Path, time::Duration};
 use async_std::task;
 use mpris::{Metadata, PlaybackStatus, Player, TrackID};
 use tokio::{self};
+use base64::prelude::*;
+use std::fs;
 
 use crate::json::json_convert;
 mod lrc;
@@ -90,9 +92,25 @@ Arguments:
             // if we searched backwards or changed song, get new lyrics
             if (prev_song != curr_song) || (prev_pos > curr_pos) {
                 // cover sent once here, afterwards only lyrics will be sent
-                let cover = urlencoding::decode(metadata.art_url()
-                    .unwrap_or_default().strip_prefix("file://").unwrap_or_default())
-                    .unwrap_or_default().into_owned();
+                let cover_url = urlencoding::decode(metadata.art_url().unwrap_or_default()).unwrap_or_default().to_string();
+                let cover: String = if cover_url.starts_with("file://") {
+                    cover_url.strip_prefix("file://").unwrap_or_default().to_owned()
+                } else if cover_url.starts_with("data:image/") {
+                    let (info, data) = cover_url.split_once(",").unwrap_or_default();
+                    let cache_dir = format!("/tmp/kiril/{}/",
+                        metadata.artists().unwrap_or(Vec::new()).get(0).unwrap().to_string());
+                    let cache_file = format!("{}{}", cache_dir, metadata.album_name().unwrap_or_default());
+                    let cache_dir_path = Path::new(&cache_dir);
+                    let cache_file_path = Path::new(&cache_file);
+                    _ = fs::create_dir_all(cache_dir_path);
+                    if info.contains(";base64") {
+                        let data = BASE64_STANDARD.decode(data).unwrap_or_default();
+                        if !cache_file_path.exists() {
+                            _ = fs::write(cache_file_path, data);
+                        }
+                        cache_file_path.to_str().unwrap().to_owned()
+                    } else { String::default() }
+                } else { String::default() };
                 line_num = -1;
                 word_num = 0;
                 curr_line = VecDeque::new();
