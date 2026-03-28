@@ -25,15 +25,15 @@ Once a matching file is found, kiril parses it to extract timestamps for all the
 > [!NOTE]
 > I did not write or test this for streaming services such as Spotify or Apple Music (Which do also have their own lyric-viewer implementations). There are no plans to change that any time soon. This is intended for local file playback with locally stored `.lrc` files only!
 
-Support for MPRIS' features is not fully realized by all players, some issues I have encountered and might fix are:
+Support for MPRIS' features is not fully realized by all players, here are the results for all the players I have tested so far:
 
-- **mpv** and **elisa:** [mpv-mpris](https://github.com/hoyon/mpv-mpris) and [elisa](https://github.com/KDE/elisa) do not cache cover arts and instead sends the entire file encoded in base64 ([relevant Issue](https://github.com/hoyon/mpv-mpris/issues/111))
 - **cmus:** [cmus](https://github.com/cmus/cmus) provides neither song-url, nor cover-art-url ([relevant PR, closed](https://github.com/cmus/cmus/pull/1009))
-
-- **VLC:** confirmed working ✅
-- **Lollypop:** confirmed working ✅
-- **RythmBox:** confirmed working ✅
-- **QuodLibet:** confirmed working ✅
+- **[VLC](https://www.videolan.org/):** confirmed working ✅
+- **[mpv](https://mpv.io/):** confirmed working ✅ (using [mpv-mpris](https://github.com/hoyon/mpv-mpris))
+- **[Elisa](https://github.com/KDE/elisa):** confirmed working ✅
+- **[Lollypop](https://gitlab.gnome.org/World/lollypop):** confirmed working ✅
+- **[RythmBox](https://gitlab.gnome.org/GNOME/rhythmbox):** confirmed working ✅
+- **[QuodLibet](https://github.com/quodlibet/quodlibet):** confirmed working ✅
 
 ## Installation
 
@@ -63,7 +63,6 @@ The binary can now be found under `./kiril/target/release/kiril`
 </li>
 
 ## TODOs
-- Caching for base64 encoded cover arts
 - Support for custom lyric directories
 - Support for other metadata (artist, title, etc.)
 - Support for tags within `.lrc` files (especially offset, the other metadata can be extracted via MPRIS usually)
