@@ -1,0 +1,97 @@
+(deflisten lrcout "/path/to/kiril -j") ;; this path should point to where kiril is installed
+
+(defwindow lrc
+  :monitor 0
+  :stacking "overlay"
+  :windowtype "normal"
+  :wm-ignore true
+  :geometry (geometry
+    :x "20px"
+    :y "70%"
+    :width "98%"
+    :height "25%")
+  (lrc_full)
+)
+
+(defwidget lrc_full []
+  (box :orientation "h" :space-evenly false
+    (cover)
+
+    (box :valign "center"
+      (lyrics)
+    )
+  )
+)
+
+(defwidget cover []
+  (image :path "${lrcout.cover}" 
+    :class "cover"
+    :image-width 250
+    :image-height 250
+  )
+)
+
+
+
+(defwidget lyrics []
+  (box :orientation "v" :space-evenly false :class "lyrics"
+    (lrcprev)
+    (lrccurr)
+    (lrcnext)
+  )
+)
+
+(defwidget lrccurr []
+  (box :orientation "horizontal"
+    :space-evenly false
+    :halign "start"
+      (label
+        :class "wprev"
+        :text "${lrcout.prev_words}")
+      (label
+        :class "wcurr"
+        :text "${lrcout.curr_word} ")
+      (label
+        :class "wnext"
+        :text "${lrcout.next_words}")
+  )
+)
+
+(defwidget lrcprev []
+  (box :orientation "v"
+    :space-evenly false
+      (label
+        :class "lprev"
+        :halign "start"
+        :text "${lrcout.prev_lines[0] != "null" ? lrcout.prev_lines[0] : ""}")
+      (label
+        :class "lprev"
+        :halign "start"
+        :text "${lrcout.prev_lines[1] != "null" ? lrcout.prev_lines[1] : ""}")
+  )
+)
+
+(defwidget lrcnext []
+  (box :orientation "v"
+    :space-evenly false
+      (label
+        :class "lnext"
+        :halign "start"
+        :text "${lrcout.next_lines[0] != "null" ? lrcout.next_lines[0] : ""}")
+      (label
+        :class "lnext"
+        :halign "start"
+        :text "${lrcout.next_lines[1] != "null" ? lrcout.next_lines[1] : ""}")
+  )
+)
+
+;; expected JSON:
+;; {
+;;     "prev_lines":["first line","second line"],
+;;     "next_lines":["fourth line","fifth line"],
+;;     "prev_words":"one two",
+;;     "curr_word":"three",
+;;     "next_words":"four five",
+;;     "cover":"/path/to/cover"
+;; }
+
