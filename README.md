@@ -27,7 +27,7 @@ Once a matching file is found, kiril parses it to extract timestamps for all the
 
 Support for MPRIS' features is not fully realized by all players, here are the results for all the players I have tested so far:
 
-- **cmus:** [cmus](https://github.com/cmus/cmus) provides neither song-url, nor cover-art-url ([relevant PR, closed](https://github.com/cmus/cmus/pull/1009))
+- **[cmus](https://github.com/cmus/cmus):** provides neither song-url, nor cover-art-url ([relevant PR, closed](https://github.com/cmus/cmus/pull/1009))
 - **[VLC](https://www.videolan.org/):** confirmed working ✅
 - **[mpv](https://mpv.io/):** confirmed working ✅ (using [mpv-mpris](https://github.com/hoyon/mpv-mpris))
 - **[Elisa](https://github.com/KDE/elisa):** confirmed working ✅
