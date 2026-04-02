@@ -17,8 +17,11 @@ Lets say you are currently listening to:
 Then kiril will search in `/foo/bar/` for the corresponding LRC-file called `trackname.lrc`. If it could not be found there, for each dir in `/foo/bar/` kiril will recursively search for the LRC file again. Currently kiril only does this once, for direct subdirectories but i am planning to make that customizable (as well as adding custom directories, see TODOs)
 
 Once a matching file is found, kiril parses it to extract timestamps for all the lines in the track (also supports [word-by-word](https://en.wikipedia.org/wiki/LRC_(file_format)#A2_extension_.28Enhanced_LRC_format.29) synced lyrics) and prints them to the terminal when they are sung. Currently lyrics can be printed:
+
 - in plain text (Just the words being sung with no additional information)
+![plain text example video](graphics/plaintext.mp4?raw=true "")
 - in JSON format (containing information like, next/prev lines/words, currently sung line/word and cover art url) which I found helpful for making widgets using [eww](https://github.com/elkowar/eww)
+![eww example video](graphics/eww.mp4?raw=true "")
 
 
 ## Tested Players
