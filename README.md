@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./images/banner.png" width="426" height="280" />
+  <img src="./graphics/banner.png" width="426" height="280" />
   <h1>✨kiril✨</h1>
 </div>
 
@@ -19,10 +19,14 @@ Then kiril will search in `/foo/bar/` for the corresponding LRC-file called `tra
 Once a matching file is found, kiril parses it to extract timestamps for all the lines in the track (also supports [word-by-word](https://en.wikipedia.org/wiki/LRC_(file_format)#A2_extension_.28Enhanced_LRC_format.29) synced lyrics) and prints them to the terminal when they are sung. Currently lyrics can be printed:
 
 - in plain text (Just the words being sung with no additional information)
-![plain text example video](graphics/plaintext.mp4?raw=true "")
-- in JSON format (containing information like, next/prev lines/words, currently sung line/word and cover art url) which I found helpful for making widgets using [eww](https://github.com/elkowar/eww)
-![eww example video](graphics/eww.mp4?raw=true "")
 
+  https://github.com/user-attachments/assets/cf00f4f8-1e60-4db7-994f-6bb17cf7ab79
+
+- in JSON format (containing information like, next/prev lines/words, currently sung line/word and cover art url) which I found helpful for making widgets using [eww](https://github.com/elkowar/eww)
+
+  https://github.com/user-attachments/assets/d479c503-b8a4-4b82-9471-7186e65b4390
+
+(awesome test track made by [Systemabsturz](https://systemabsturz.band/), please do check them out! ^^)
 
 ## Tested Players
 > [!NOTE]
